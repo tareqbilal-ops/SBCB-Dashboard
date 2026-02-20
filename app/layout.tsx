@@ -12,8 +12,8 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'SBCB - لوحة التحكم التنفيذية',
-  description: 'لوحة رقمية تفاعلية لإدارة توسّع مجالس الأعمال السورية الثنائية',
+  title: 'SBCB - بوابة مجالس الأعمال السورية المشتركة',
+  description: 'لوحة رقمية تفاعلية لإدارة مجالس الأعمال السورية المشتركة - المشاريع والمشاركين والمبادرات',
   generator: 'v0.app',
   icons: {
     icon: [

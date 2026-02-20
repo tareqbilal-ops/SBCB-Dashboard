@@ -1,4 +1,4 @@
-import type { Country, Risk } from "./types";
+import type { Country, Risk, Project, Participant, User, Initiative } from "./types";
 
 export const seedCountries: Country[] = [
   {
@@ -194,6 +194,147 @@ export const seedCountries: Country[] = [
     entry_date: "2026-02-08", created_at: "2026-02-16T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
   },
 ];
+
+// ========== USERS ==========
+
+export const seedUsers: User[] = [
+  { id: "u-001", name: "المشرف العام", email: "admin@sbcb.org", membership_level: "مشرف عام", access_key: "ADMIN-2026" },
+  { id: "u-002", name: "مدير الإقليم", email: "region@sbcb.org", membership_level: "مدير إقليمي", access_key: "REGION-2026" },
+  { id: "u-003", name: "مدير المجلس", email: "council@sbcb.org", membership_level: "مدير مجلس", access_key: "COUNCIL-2026" },
+  { id: "u-004", name: "عضو المجلس", email: "member@sbcb.org", membership_level: "عضو", access_key: "MEMBER-2026" },
+  { id: "u-005", name: "زائر", email: "visitor@sbcb.org", membership_level: "زائر", access_key: "VISITOR-2026" },
+];
+
+// ========== PROJECTS ==========
+
+export const seedProjects: Project[] = [
+  {
+    id: "p-001", name: "مشروع تعزيز الصادرات السورية إلى تركيا", type: "تجاري",
+    status: "قيد التنفيذ", priority: "مرتفع",
+    description: "مشروع لتطوير سلاسل التصدير وتسهيل التبادل التجاري بين سوريا وتركيا عبر المجلس الثنائي",
+    council_type: "ثنائي", country_ids: ["c-001"], sector: null,
+    budget: 250000, start_date: "2026-01-15", end_date: "2026-12-31",
+    owner: "مجلس الأعمال السوري-التركي", participants: ["pt-001", "pt-002"],
+    created_at: "2026-01-10T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "p-002", name: "منصة الاستثمار المشترك - الخليج", type: "تجاري",
+    status: "مقترح", priority: "عاجل",
+    description: "إنشاء منصة رقمية للاستثمار المشترك بين سوريا ودول الخليج العربي بإشراف المجلس الإقليمي",
+    council_type: "إقليمي", country_ids: ["c-002", "c-012", "c-022"], sector: null,
+    budget: 500000, start_date: "2026-03-01", end_date: "2027-03-01",
+    owner: "المجلس الإقليمي - الخليج", participants: ["pt-003", "pt-004"],
+    created_at: "2026-02-01T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "p-003", name: "دراسة تطوير التشريعات التجارية", type: "بحثي",
+    status: "قيد التنفيذ", priority: "مرتفع",
+    description: "دراسة بحثية لتحليل التشريعات التجارية ووضع توصيات لتحسين بيئة الأعمال بإشراف المجلس القطاعي للتشريعات",
+    council_type: null, country_ids: [], sector: "التشريعات والسياسات التجارية",
+    budget: 120000, start_date: "2026-02-01", end_date: "2026-08-01",
+    owner: "المجلس القطاعي للتشريعات", participants: ["pt-005"],
+    created_at: "2026-01-20T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "p-004", name: "تحليل فرص السوق الألمانية", type: "بحثي",
+    status: "مكتمل", priority: "متوسط",
+    description: "بحث ميداني حول فرص دخول المنتجات السورية إلى السوق الألمانية وتحديد القطاعات الواعدة",
+    council_type: null, country_ids: ["c-003"], sector: "تحليل الأسواق",
+    budget: 80000, start_date: "2025-09-01", end_date: "2026-01-31",
+    owner: "المجلس القطاعي لتحليل الأسواق", participants: ["pt-002", "pt-005"],
+    created_at: "2025-09-01T10:00:00Z", updated_at: "2026-02-01T10:00:00Z"
+  },
+  {
+    id: "p-005", name: "معرض التجارة السوري-البريطاني", type: "تجاري",
+    status: "قيد التنفيذ", priority: "متوسط",
+    description: "تنظيم معرض تجاري مشترك في لندن لعرض المنتجات والخدمات السورية",
+    council_type: "ثنائي", country_ids: ["c-004"], sector: null,
+    budget: 180000, start_date: "2026-04-01", end_date: "2026-06-30",
+    owner: "مجلس الأعمال السوري-البريطاني", participants: ["pt-001", "pt-004"],
+    created_at: "2026-02-10T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "p-006", name: "بحث سياسات دعم المنشآت الصغيرة", type: "بحثي",
+    status: "مقترح", priority: "منخفض",
+    description: "إعداد ورقة سياسات لدعم صاحب القرار في مجال المنشآت الصغيرة والمتوسطة",
+    council_type: null, country_ids: [], sector: "دعم المنشآت الصغيرة",
+    budget: 60000, start_date: null, end_date: null,
+    owner: "المجلس القطاعي للمنشآت الصغيرة", participants: [],
+    created_at: "2026-02-15T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+];
+
+// ========== PARTICIPANTS ==========
+
+export const seedParticipants: Participant[] = [
+  {
+    id: "pt-001", name: "أحمد الخطيب", type: "شخصية حقيقية",
+    email: "ahmed@example.com", phone: "+90 555 123 4567", country: "تركيا",
+    organization: "مجموعة الخطيب التجارية", role: "رئيس مجلس الأعمال السوري-التركي",
+    council_ids: ["c-001"], notes: "عضو مؤسس",
+    created_at: "2025-09-01T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "pt-002", name: "شركة النور للاستيراد والتصدير", type: "شركة",
+    email: "info@alnour.com", phone: "+49 30 1234567", country: "ألمانيا",
+    organization: null, role: "عضو مجلس إدارة",
+    council_ids: ["c-003"], notes: "شركة تجارية رائدة في الاستيراد والتصدير",
+    created_at: "2025-10-01T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "pt-003", name: "غرفة تجارة وصناعة الرياض", type: "هيئة",
+    email: "riyadh@chamber.sa", phone: "+966 11 234 5678", country: "السعودية",
+    organization: null, role: "شريك مؤسسي",
+    council_ids: ["c-002"], notes: "شريك استراتيجي في المنطقة",
+    created_at: "2025-10-15T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "pt-004", name: "مجلس الأعمال السوري-الإماراتي", type: "مجلس",
+    email: "council@sbcb-uae.org", phone: "+971 4 567 8901", country: "الإمارات",
+    organization: null, role: "مجلس شريك",
+    council_ids: ["c-012"], notes: "مجلس قيد التأسيس",
+    created_at: "2026-01-10T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "pt-005", name: "د. سمير حسن", type: "شخصية حقيقية",
+    email: "samir@research.org", phone: "+44 20 7123 4567", country: "المملكة المتحدة",
+    organization: "مركز أبحاث السياسات الاقتصادية", role: "باحث رئيسي",
+    council_ids: ["c-004"], notes: "خبير في السياسات التجارية والتشريعات",
+    created_at: "2025-11-05T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+  {
+    id: "pt-006", name: "محمد العلي", type: "شخصية حقيقية",
+    email: "mali@business.com", phone: "+1 202 555 0199", country: "الولايات المتحدة",
+    organization: "العلي للاستشارات", role: "عضو",
+    council_ids: ["c-005"], notes: "",
+    created_at: "2025-12-01T10:00:00Z", updated_at: "2026-02-16T10:00:00Z"
+  },
+];
+
+// ========== INITIATIVES ==========
+
+export const seedInitiatives: Initiative[] = [
+  {
+    id: "i-001", applicant_name: "عمر الشامي", applicant_email: "omar@example.com",
+    applicant_phone: "+90 532 987 6543", target_country: "هولندا",
+    proposed_sectors: ["التقنية", "الزراعة"], founding_members: "5 رجال أعمال سوريين مقيمين في هولندا، 3 شركاء هولنديين",
+    business_plan_summary: "إنشاء مجلس أعمال سوري-هولندي يركز على تبادل الخبرات الزراعية والتقنية",
+    attachments: ["business-plan.pdf", "founders-cv.pdf"],
+    status: "قيد المراجعة", submitted_by: "u-004",
+    submitted_at: "2026-02-10T10:00:00Z", reviewed_at: null, reviewer_notes: null
+  },
+  {
+    id: "i-002", applicant_name: "ليلى حداد", applicant_email: "layla@example.com",
+    applicant_phone: "+39 06 123 4567", target_country: "إيطاليا",
+    proposed_sectors: ["الصناعات الغذائية", "السياحة"], founding_members: "7 أعضاء مؤسسين بين سوريا وإيطاليا",
+    business_plan_summary: "تأسيس مجلس أعمال سوري-إيطالي متخصص في الصناعات الغذائية والسياحة",
+    attachments: ["proposal.pdf"],
+    status: "مقدّم", submitted_by: "u-004",
+    submitted_at: "2026-02-18T10:00:00Z", reviewed_at: null, reviewer_notes: null
+  },
+];
+
+// ========== RISKS ==========
 
 export const seedRisks: Risk[] = [
   {

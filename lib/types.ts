@@ -67,6 +67,100 @@ export interface Risk {
   updated_at: string;
 }
 
+// ========== PROJECT TYPES ==========
+
+export const PROJECT_TYPES = ["تجاري", "بحثي"] as const;
+export type ProjectType = (typeof PROJECT_TYPES)[number];
+
+export const PROJECT_STATUSES = ["مقترح", "قيد التنفيذ", "مكتمل", "معلّق", "ملغى"] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
+export const PROJECT_PRIORITIES = ["عاجل", "مرتفع", "متوسط", "منخفض"] as const;
+export type ProjectPriority = (typeof PROJECT_PRIORITIES)[number];
+
+export const COUNCIL_TYPES = ["ثنائي", "إقليمي"] as const;
+export type CouncilType = (typeof COUNCIL_TYPES)[number];
+
+export interface Project {
+  id: string;
+  name: string;
+  type: ProjectType;
+  status: ProjectStatus;
+  priority: ProjectPriority;
+  description: string;
+  council_type: CouncilType | null;
+  country_ids: string[];
+  sector: string | null;
+  budget: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  owner: string;
+  participants: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== PARTICIPANT TYPES ==========
+
+export const PARTICIPANT_TYPES = ["شخصية حقيقية", "شركة", "هيئة", "مجلس"] as const;
+export type ParticipantType = (typeof PARTICIPANT_TYPES)[number];
+
+export interface Participant {
+  id: string;
+  name: string;
+  type: ParticipantType;
+  email: string;
+  phone: string;
+  country: string;
+  organization: string | null;
+  role: string;
+  council_ids: string[];
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== AUTH TYPES ==========
+
+export const MEMBERSHIP_LEVELS = [
+  "مشرف عام",
+  "مدير إقليمي",
+  "مدير مجلس",
+  "عضو",
+  "زائر",
+] as const;
+export type MembershipLevel = (typeof MEMBERSHIP_LEVELS)[number];
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  membership_level: MembershipLevel;
+  access_key: string;
+}
+
+// ========== INITIATIVE TYPES ==========
+
+export const INITIATIVE_STATUSES = ["مقدّم", "قيد المراجعة", "مقبول", "مرفوض"] as const;
+export type InitiativeStatus = (typeof INITIATIVE_STATUSES)[number];
+
+export interface Initiative {
+  id: string;
+  applicant_name: string;
+  applicant_email: string;
+  applicant_phone: string;
+  target_country: string;
+  proposed_sectors: string[];
+  founding_members: string;
+  business_plan_summary: string;
+  attachments: string[];
+  status: InitiativeStatus;
+  submitted_by: string;
+  submitted_at: string;
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+}
+
 // ========== COMPUTED TYPES ==========
 
 export type ReadinessLabel =
