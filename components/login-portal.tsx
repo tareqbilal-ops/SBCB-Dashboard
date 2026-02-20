@@ -83,7 +83,7 @@ export function LoginPortal() {
         <Card className="w-full border-border shadow-lg lg:max-w-md">
           <CardHeader className="flex flex-col items-center gap-4 border-b border-border bg-primary/5 pb-6 pt-8">
             <Image
-              src="/images/sbcb-logo-gold.png"
+              src="/images/sbcb-logo.png"
               alt="SBCB Logo"
               width={64}
               height={64}

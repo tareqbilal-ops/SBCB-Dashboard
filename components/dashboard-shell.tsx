@@ -65,7 +65,7 @@ export function DashboardShell({ currentView, onViewChange, children }: Dashboar
         {/* Logo area */}
         <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-5">
           <Image
-            src="/images/sbcb-logo-gold.png"
+            src="/images/sbcb-logo.png"
             alt="SBCB Logo"
             width={40}
             height={40}
