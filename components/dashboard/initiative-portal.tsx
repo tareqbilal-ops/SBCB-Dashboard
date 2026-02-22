@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import type { Initiative, InitiativeStatus } from "@/lib/types";
-import { INITIATIVE_STATUSES } from "@/lib/types";
+import useSWR from "swr";
+import type { InitiativeStatus } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,16 +42,38 @@ import {
   Shield,
   BookOpen,
   Pencil,
+  Loader2,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 
+// DB shape from Supabase
+interface DbInitiative {
+  id: string;
+  applicant_name: string;
+  applicant_email: string;
+  applicant_phone: string;
+  target_country: string;
+  proposed_sectors: string[];
+  founding_members: string;
+  business_plan_summary: string;
+  attachments: string[];
+  status: InitiativeStatus;
+  submitted_by: string;
+  submitted_at: string;
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface InitiativePortalProps {
-  initiatives: Initiative[];
   canSubmit: boolean;
   canReview: boolean;
   userId: string;
-  onAddInitiative: (i: Omit<Initiative, "id" | "submitted_at" | "reviewed_at" | "reviewer_notes">) => void;
-  onUpdateInitiative: (id: string, updates: Partial<Initiative>) => void;
 }
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 const statusConfig: Record<InitiativeStatus, { color: string; icon: typeof Clock }> = {
   "مقدّم": { color: "bg-sky-100 text-sky-800 border-sky-300", icon: Send },
@@ -77,19 +99,24 @@ const EVALUATION_STEPS = [
 ];
 
 export function InitiativePortal({
-  initiatives,
   canSubmit,
   canReview,
   userId,
-  onAddInitiative,
-  onUpdateInitiative,
 }: InitiativePortalProps) {
+  const { data: initiatives, error, isLoading, mutate } = useSWR<DbInitiative[]>(
+    "/api/initiatives",
+    fetcher,
+    { refreshInterval: 10000, revalidateOnFocus: true }
+  );
+
   const [activeTab, setActiveTab] = useState<"info" | "submit" | "list">("info");
   const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [reviewTarget, setReviewTarget] = useState<Initiative | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<DbInitiative | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewStatus, setReviewStatus] = useState<InitiativeStatus>("مقبول");
+  const [reviewing, setReviewing] = useState(false);
 
   const [form, setForm] = useState({
     applicant_name: "",
@@ -100,52 +127,73 @@ export function InitiativePortal({
     founding_members: "",
     business_plan_summary: "",
     attachments: [] as string[],
-    status: "مقدّم" as InitiativeStatus,
-    submitted_by: userId,
   });
 
+  const allInitiatives = useMemo(() => initiatives || [], [initiatives]);
   const myInitiatives = useMemo(
-    () => initiatives.filter((i) => i.submitted_by === userId),
-    [initiatives, userId]
+    () => allInitiatives.filter((i) => i.submitted_by === userId),
+    [allInitiatives, userId]
   );
 
-  const allInitiatives = useMemo(() => initiatives, [initiatives]);
-
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!form.applicant_name.trim() || !form.target_country.trim()) return;
-    onAddInitiative({
-      ...form,
-      proposed_sectors: form.proposed_sectors.split("،").map((s) => s.trim()).filter(Boolean),
-    });
-    setForm({
-      applicant_name: "",
-      applicant_email: "",
-      applicant_phone: "",
-      target_country: "",
-      proposed_sectors: "",
-      founding_members: "",
-      business_plan_summary: "",
-      attachments: [],
-      status: "مقدّم",
-      submitted_by: userId,
-    });
-    setStep(0);
-    setActiveTab("list");
-  }, [form, userId, onAddInitiative]);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/initiatives", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          proposed_sectors: form.proposed_sectors.split("،").map((s) => s.trim()).filter(Boolean),
+          submitted_by: userId,
+        }),
+      });
+      if (!res.ok) throw new Error("فشل في إرسال المبادرة");
+      await mutate(); // Revalidate SWR cache
+      setForm({
+        applicant_name: "",
+        applicant_email: "",
+        applicant_phone: "",
+        target_country: "",
+        proposed_sectors: "",
+        founding_members: "",
+        business_plan_summary: "",
+        attachments: [],
+      });
+      setStep(0);
+      setActiveTab("list");
+    } catch (err) {
+      console.error("Submit error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [form, userId, mutate]);
 
-  const handleReview = useCallback(() => {
+  const handleReview = useCallback(async () => {
     if (!reviewTarget) return;
-    onUpdateInitiative(reviewTarget.id, {
-      status: reviewStatus,
-      reviewer_notes: reviewNotes,
-      reviewed_at: new Date().toISOString(),
-    });
-    setReviewDialogOpen(false);
-    setReviewTarget(null);
-    setReviewNotes("");
-  }, [reviewTarget, reviewStatus, reviewNotes, onUpdateInitiative]);
+    setReviewing(true);
+    try {
+      const res = await fetch(`/api/initiatives/${reviewTarget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: reviewStatus,
+          reviewer_notes: reviewNotes,
+        }),
+      });
+      if (!res.ok) throw new Error("فشل في حفظ المراجعة");
+      await mutate(); // Revalidate SWR cache
+      setReviewDialogOpen(false);
+      setReviewTarget(null);
+      setReviewNotes("");
+    } catch (err) {
+      console.error("Review error:", err);
+    } finally {
+      setReviewing(false);
+    }
+  }, [reviewTarget, reviewStatus, reviewNotes, mutate]);
 
-  const openReview = useCallback((initiative: Initiative) => {
+  const openReview = useCallback((initiative: DbInitiative) => {
     setReviewTarget(initiative);
     setReviewStatus("مقبول");
     setReviewNotes("");
@@ -169,7 +217,36 @@ export function InitiativePortal({
             </p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => mutate()} disabled={isLoading}>
+            <RefreshCw className={`ml-1.5 h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            تحديث
+          </Button>
+          {!isLoading && !error && (
+            <Badge variant="secondary" className="text-[10px]">
+              {allInitiatives.length} مبادرة
+            </Badge>
+          )}
+        </div>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 p-4">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-destructive">خطأ في تحميل البيانات</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                تعذّر الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="mr-auto shrink-0" onClick={() => mutate()}>
+              إعادة المحاولة
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/50 p-1">
@@ -455,23 +532,23 @@ export function InitiativePortal({
                   <h4 className="text-xs font-semibold text-foreground mb-3">ملخص الطلب</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-muted-foreground">مقدّم الطلب: </span>
+                      <span className="text-muted-foreground">{"مقدّم الطلب: "}</span>
                       <span className="font-medium text-foreground">{form.applicant_name || "-"}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">الدولة المستهدفة: </span>
+                      <span className="text-muted-foreground">{"الدولة المستهدفة: "}</span>
                       <span className="font-medium text-foreground">{form.target_country || "-"}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">البريد: </span>
+                      <span className="text-muted-foreground">{"البريد: "}</span>
                       <span className="font-medium text-foreground" dir="ltr">{form.applicant_email || "-"}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">القطاعات: </span>
+                      <span className="text-muted-foreground">{"القطاعات: "}</span>
                       <span className="font-medium text-foreground">{form.proposed_sectors || "-"}</span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-muted-foreground">المرفقات: </span>
+                      <span className="text-muted-foreground">{"المرفقات: "}</span>
                       <span className="font-medium text-foreground">{form.attachments.length > 0 ? form.attachments.join("، ") : "لا توجد"}</span>
                     </div>
                   </div>
@@ -500,11 +577,15 @@ export function InitiativePortal({
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={!form.applicant_name.trim() || !form.target_country.trim()}
+                  disabled={!form.applicant_name.trim() || !form.target_country.trim() || submitting}
                   className="bg-primary text-primary-foreground"
                 >
-                  <Send className="ml-1.5 h-4 w-4" />
-                  إرسال المبادرة
+                  {submitting ? (
+                    <Loader2 className="ml-1.5 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="ml-1.5 h-4 w-4" />
+                  )}
+                  {submitting ? "جارٍ الإرسال..." : "إرسال المبادرة"}
                 </Button>
               )}
             </div>
@@ -515,7 +596,17 @@ export function InitiativePortal({
       {/* List Tab */}
       {activeTab === "list" && (
         <div className="flex flex-col gap-3">
-          {displayList.length === 0 ? (
+          {/* Loading state */}
+          {isLoading && (
+            <Card className="border-border">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                <p className="text-sm text-muted-foreground">جارٍ تحميل المبادرات...</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!isLoading && displayList.length === 0 ? (
             <Card className="border-border">
               <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <ClipboardList className="h-10 w-10 mb-3 opacity-40" />
@@ -523,7 +614,7 @@ export function InitiativePortal({
               </CardContent>
             </Card>
           ) : (
-            displayList.map((initiative) => {
+            !isLoading && displayList.map((initiative) => {
               const stsCfg = statusConfig[initiative.status];
               return (
                 <Card key={initiative.id} className="border-border hover:shadow-md transition-shadow">
@@ -563,7 +654,7 @@ export function InitiativePortal({
                         </p>
                         {initiative.reviewer_notes && (
                           <div className="mt-2 rounded-md bg-muted/50 border border-border p-2 text-xs">
-                            <span className="font-medium text-foreground">ملاحظات المراجع: </span>
+                            <span className="font-medium text-foreground">{"ملاحظات المراجع: "}</span>
                             <span className="text-muted-foreground">{initiative.reviewer_notes}</span>
                           </div>
                         )}
@@ -601,7 +692,7 @@ export function InitiativePortal({
                   مبادرة مجلس أعمال سوري - {reviewTarget.target_country}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  مقدّم الطلب: {reviewTarget.applicant_name}
+                  {"مقدّم الطلب: "}{reviewTarget.applicant_name}
                 </p>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -629,8 +720,11 @@ export function InitiativePortal({
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setReviewDialogOpen(false)}>إلغاء</Button>
-            <Button onClick={handleReview} className="bg-primary text-primary-foreground">
-              حفظ المراجعة
+            <Button onClick={handleReview} disabled={reviewing} className="bg-primary text-primary-foreground">
+              {reviewing ? (
+                <Loader2 className="ml-1.5 h-4 w-4 animate-spin" />
+              ) : null}
+              {reviewing ? "جارٍ الحفظ..." : "حفظ المراجعة"}
             </Button>
           </DialogFooter>
         </DialogContent>

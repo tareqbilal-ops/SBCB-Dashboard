@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Country, Risk, Project, Participant, Initiative } from "@/lib/types";
-import { seedCountries, seedRisks, seedProjects, seedParticipants, seedInitiatives } from "@/lib/seed-data";
+import type { Country, Risk, Project, Participant } from "@/lib/types";
+import { seedCountries, seedRisks, seedProjects, seedParticipants } from "@/lib/seed-data";
 import { computeScoreTotal } from "@/lib/business-logic";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { LoginPortal } from "@/components/login-portal";
@@ -25,7 +25,6 @@ function DashboardContent() {
   const [risks, setRisks] = useState<Risk[]>(seedRisks);
   const [projects, setProjects] = useState<Project[]>(seedProjects);
   const [participants, setParticipants] = useState<Participant[]>(seedParticipants);
-  const [initiatives, setInitiatives] = useState<Initiative[]>(seedInitiatives);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -128,30 +127,6 @@ function DashboardContent() {
     []
   );
 
-  // Initiatives CRUD
-  const handleAddInitiative = useCallback(
-    (initiative: Omit<Initiative, "id" | "submitted_at" | "reviewed_at" | "reviewer_notes">) => {
-      const newInitiative: Initiative = {
-        ...initiative,
-        id: `i-${String(Date.now()).slice(-6)}`,
-        submitted_at: new Date().toISOString(),
-        reviewed_at: null,
-        reviewer_notes: null,
-      };
-      setInitiatives((prev) => [...prev, newInitiative]);
-    },
-    []
-  );
-
-  const handleUpdateInitiative = useCallback(
-    (id: string, updates: Partial<Initiative>) => {
-      setInitiatives((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, ...updates } : i))
-      );
-    },
-    []
-  );
-
   // Show login if not authenticated
   if (!isAuthenticated) {
     return <LoginPortal />;
@@ -201,12 +176,9 @@ function DashboardContent() {
       )}
       {currentView === "initiatives" && (
         <InitiativePortal
-          initiatives={initiatives}
           canSubmit={canSubmitInitiatives}
           canReview={canReviewInitiatives}
           userId={user?.id || ""}
-          onAddInitiative={handleAddInitiative}
-          onUpdateInitiative={handleUpdateInitiative}
         />
       )}
 
