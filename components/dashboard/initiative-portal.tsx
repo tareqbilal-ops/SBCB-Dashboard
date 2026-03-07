@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useCallback } from "react";
 import useSWR from "swr";
-import type { InitiativeStatus } from "@/lib/types";
+import type { InitiativeStatus, Phase2Track } from "@/lib/types";
+import { PHASE2_TRACKS } from "@/lib/types";
+import { seedCountries } from "@/lib/seed-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -118,14 +120,22 @@ export function InitiativePortal({
   const [reviewStatus, setReviewStatus] = useState<InitiativeStatus>("مقبول");
   const [reviewing, setReviewing] = useState(false);
 
+  // Get available countries (exclude those with Approved councils)
+  const availableCountries = useMemo(
+    () => seedCountries.filter((c) => c.stage !== "Approved"),
+    []
+  );
+
   const [form, setForm] = useState({
     applicant_name: "",
     applicant_email: "",
     applicant_phone: "",
     target_country: "",
+    interest_area: "" as Phase2Track | "",
     proposed_sectors: "" as string,
     founding_members: "",
     business_plan_summary: "",
+    company_profile: "" as string,
     attachments: [] as string[],
   });
 
@@ -143,8 +153,16 @@ export function InitiativePortal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          applicant_name: form.applicant_name,
+          applicant_email: form.applicant_email,
+          applicant_phone: form.applicant_phone,
+          target_country: form.target_country,
+          interest_area: form.interest_area,
           proposed_sectors: form.proposed_sectors.split("،").map((s) => s.trim()).filter(Boolean),
+          founding_members: form.founding_members,
+          business_plan_summary: form.business_plan_summary,
+          company_profile: form.company_profile,
+          attachments: form.attachments,
           submitted_by: userId,
         }),
       });
@@ -155,9 +173,11 @@ export function InitiativePortal({
         applicant_email: "",
         applicant_phone: "",
         target_country: "",
+        interest_area: "",
         proposed_sectors: "",
         founding_members: "",
         business_plan_summary: "",
+        company_profile: "",
         attachments: [],
       });
       setStep(0);
@@ -397,7 +417,7 @@ export function InitiativePortal({
                       dir="ltr"
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">رقم الهاتف</Label>
                     <Input
                       type="tel"
@@ -408,6 +428,36 @@ export function InitiativePortal({
                       dir="ltr"
                     />
                   </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-sm">بروفايل الشركة (اسم الملف)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={form.company_profile}
+                        onChange={(e) => setForm((f) => ({ ...f, company_profile: e.target.value }))}
+                        placeholder="مثال: company-profile.pdf"
+                        className="text-sm"
+                        dir="ltr"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          // Simulate file picker - in production, integrate with Vercel Blob
+                          const fileName = prompt("أدخل اسم ملف بروفايل الشركة:");
+                          if (fileName?.trim()) {
+                            setForm((f) => ({ ...f, company_profile: fileName.trim() }));
+                          }
+                        }}
+                      >
+                        <Upload className="ml-1 h-3.5 w-3.5" />
+                        رفع
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      يرجى رفع ملف تعريفي بالشركة التي تمثلها أو تعمل فيها أو تمتلكها
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -415,16 +465,53 @@ export function InitiativePortal({
             {/* Step 1: Target & Sectors */}
             {step === 1 && (
               <div className="flex flex-col gap-4">
-                <h3 className="text-sm font-medium text-foreground">الدولة المستهدفة والقطاعات</h3>
+                <h3 className="text-sm font-medium text-foreground">الدولة المستهدفة والمجال</h3>
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">الدولة المستهدفة للمجلس</Label>
-                    <Input
+                    <Select
                       value={form.target_country}
-                      onChange={(e) => setForm((f) => ({ ...f, target_country: e.target.value }))}
-                      placeholder="مثال: هولندا"
-                      className="text-sm"
-                    />
+                      onValueChange={(value) => setForm((f) => ({ ...f, target_country: value }))}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر دولة..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCountries.map((country) => (
+                          <SelectItem key={country.id} value={country.country_name_ar}>
+                            <div className="flex items-center gap-2">
+                              <span>{country.country_name_ar}</span>
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                                {country.stage === "Under Assessment" ? "قيد الدراسة" :
+                                 country.stage === "Provisional" ? "مؤقت" :
+                                 country.stage === "Candidate" ? "مرشح" : country.stage}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground">
+                      الدول ذات المجالس المعتمدة غير متاحة للاختيار
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-sm">المجال الذي يهتم به صاحب المبادرة</Label>
+                    <Select
+                      value={form.interest_area}
+                      onValueChange={(value) => setForm((f) => ({ ...f, interest_area: value as Phase2Track }))}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر المجال..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PHASE2_TRACKS.map((track) => (
+                          <SelectItem key={track} value={track}>
+                            {track}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">القطاعات المقترحة (مفصولة بفاصلة عربية)</Label>
