@@ -129,7 +129,7 @@ export function InitiativePortal({
     attachments: [] as string[],
   });
 
-  const allInitiatives = useMemo(() => initiatives || [], [initiatives]);
+  const allInitiatives = useMemo(() => Array.isArray(initiatives) ? initiatives : [], [initiatives]);
   const myInitiatives = useMemo(
     () => allInitiatives.filter((i) => i.submitted_by === userId),
     [allInitiatives, userId]
