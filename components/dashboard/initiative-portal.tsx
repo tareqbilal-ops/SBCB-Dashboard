@@ -119,6 +119,8 @@ export function InitiativePortal({
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewStatus, setReviewStatus] = useState<InitiativeStatus>("مقبول");
   const [reviewing, setReviewing] = useState(false);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   // Get available countries (exclude those with Approved councils)
   const availableCountries = useMemo(
@@ -138,6 +140,28 @@ export function InitiativePortal({
     company_profile: "" as string,
     attachments: [] as string[],
   });
+
+  // File upload helper
+  const handleFileUpload = useCallback(async (
+    file: File,
+    onSuccess: (pathname: string, filename: string) => void,
+    setUploading: (v: boolean) => void
+  ) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const { pathname, filename } = await res.json();
+      onSuccess(pathname, filename);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("فشل في رفع الملف. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
 
   const allInitiatives = useMemo(() => Array.isArray(initiatives) ? initiatives : [], [initiatives]);
   const myInitiatives = useMemo(
@@ -429,33 +453,48 @@ export function InitiativePortal({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm">بروفايل الشركة (اسم الملف)</Label>
+                    <Label className="text-sm">بروفايل الشركة</Label>
                     <div className="flex gap-2">
-                      <Input
-                        value={form.company_profile}
-                        onChange={(e) => setForm((f) => ({ ...f, company_profile: e.target.value }))}
-                        placeholder="مثال: company-profile.pdf"
-                        className="text-sm"
-                        dir="ltr"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        onClick={() => {
-                          // Simulate file picker - in production, integrate with Vercel Blob
-                          const fileName = prompt("أدخل اسم ملف بروفايل الشركة:");
-                          if (fileName?.trim()) {
-                            setForm((f) => ({ ...f, company_profile: fileName.trim() }));
-                          }
-                        }}
-                      >
-                        <Upload className="ml-1 h-3.5 w-3.5" />
-                        رفع
-                      </Button>
+                      {form.company_profile ? (
+                        <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm truncate flex-1" dir="ltr">
+                            {form.company_profile.split("/").pop()?.split("-").slice(1).join("-") || form.company_profile}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setForm((f) => ({ ...f, company_profile: "" }))}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-1 items-center gap-2">
+                          <Input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            className="text-sm"
+                            disabled={uploadingProfile}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(
+                                  file,
+                                  (pathname) => setForm((f) => ({ ...f, company_profile: pathname })),
+                                  setUploadingProfile
+                                );
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          {uploadingProfile && <Loader2 className="h-4 w-4 animate-spin" />}
+                        </div>
+                      )}
                     </div>
                     <p className="text-[10px] text-muted-foreground">
-                      يرجى رفع ملف تعريفي بالشركة التي تمثلها أو تعمل فيها أو تمتلكها
+                      يرجى رفع ملف تعريفي بالشركة التي تمثلها أو تعمل فيها أو تمتلكها (PDF أو Word)
                     </p>
                   </div>
                 </div>
@@ -560,56 +599,59 @@ export function InitiativePortal({
               <div className="flex flex-col gap-4">
                 <h3 className="text-sm font-medium text-foreground">المرفقات والمراجعة</h3>
 
-                {/* Simulated file upload */}
+                {/* File upload */}
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-sm">المرفقات (أسماء الملفات)</Label>
-                  <div className="flex gap-2">
+                  <Label className="text-sm">المرفقات (خطة العمل، السير الذاتية، إلخ)</Label>
+                  <div className="flex gap-2 items-center">
                     <Input
-                      placeholder="مثال: business-plan.pdf"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx"
                       className="text-sm"
-                      dir="ltr"
-                      id="attachment-input"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const input = e.target as HTMLInputElement;
-                          if (input.value.trim()) {
-                            setForm((f) => ({ ...f, attachments: [...f.attachments, input.value.trim()] }));
-                            input.value = "";
-                          }
+                      disabled={uploadingAttachment}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleFileUpload(
+                            file,
+                            (pathname) => setForm((f) => ({ ...f, attachments: [...f.attachments, pathname] })),
+                            setUploadingAttachment
+                          );
                         }
+                        e.target.value = "";
                       }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const input = document.getElementById("attachment-input") as HTMLInputElement;
-                        if (input?.value.trim()) {
-                          setForm((f) => ({ ...f, attachments: [...f.attachments, input.value.trim()] }));
-                          input.value = "";
-                        }
-                      }}
-                    >
-                      <Upload className="ml-1 h-3.5 w-3.5" />
-                      إضافة
-                    </Button>
+                    {uploadingAttachment && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
                   </div>
                   {form.attachments.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {form.attachments.map((file, i) => (
-                        <Badge key={i} variant="secondary" className="text-[10px] gap-1">
-                          <FileText className="h-3 w-3" />
-                          {file}
-                          <button
-                            onClick={() => setForm((f) => ({ ...f, attachments: f.attachments.filter((_, idx) => idx !== i) }))}
-                            className="mr-0.5 text-muted-foreground hover:text-foreground"
-                          >
-                            x
-                          </button>
-                        </Badge>
-                      ))}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {form.attachments.map((file, i) => {
+                        const displayName = file.split("/").pop()?.split("-").slice(1).join("-") || file;
+                        return (
+                          <Badge key={i} variant="secondary" className="text-[10px] gap-1 py-1">
+                            <FileText className="h-3 w-3" />
+                            <a
+                              href={`/api/file?pathname=${encodeURIComponent(file)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline max-w-[120px] truncate"
+                              title={displayName}
+                            >
+                              {displayName}
+                            </a>
+                            <button
+                              onClick={() => setForm((f) => ({ ...f, attachments: f.attachments.filter((_, idx) => idx !== i) }))}
+                              className="mr-0.5 text-muted-foreground hover:text-foreground"
+                            >
+                              <XCircle className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
                     </div>
                   )}
+                  <p className="text-[10px] text-muted-foreground">
+                    يمكنك رفع عدة ملفات (PDF, Word, Excel). الحد الأقصى 10 ميجابايت لكل ملف.
+                  </p>
                 </div>
 
                 <Separator />
@@ -634,10 +676,14 @@ export function InitiativePortal({
                       <span className="text-muted-foreground">{"القطاعات: "}</span>
                       <span className="font-medium text-foreground">{form.proposed_sectors || "-"}</span>
                     </div>
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">{"المرفقات: "}</span>
-                      <span className="font-medium text-foreground">{form.attachments.length > 0 ? form.attachments.join("، ") : "لا توجد"}</span>
-                    </div>
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">{"المرفقات: "}</span>
+                    <span className="font-medium text-foreground">
+                      {form.attachments.length > 0
+                        ? form.attachments.map((f) => f.split("/").pop()?.split("-").slice(1).join("-") || f).join("، ")
+                        : "لا توجد"}
+                    </span>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -729,12 +775,27 @@ export function InitiativePortal({
                             <Clock className="h-3 w-3" />
                             <span>{new Date(initiative.submitted_at).toLocaleDateString("ar-SA")}</span>
                           </div>
-                          {initiative.attachments.length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <FileText className="h-3 w-3" />
-                              <span>{initiative.attachments.length} مرفق</span>
-                            </div>
-                          )}
+                {initiative.attachments.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <FileText className="h-3 w-3 shrink-0" />
+                    {initiative.attachments.map((file, idx) => {
+                      const displayName = file.split("/").pop()?.split("-").slice(1).join("-") || file;
+                      return (
+                        <a
+                          key={idx}
+                          href={`/api/file?pathname=${encodeURIComponent(file)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline text-[10px]"
+                          title={`تحميل: ${displayName}`}
+                        >
+                          {displayName}
+                          {idx < initiative.attachments.length - 1 && "،"}
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground leading-relaxed line-clamp-2">
                           {initiative.business_plan_summary}
