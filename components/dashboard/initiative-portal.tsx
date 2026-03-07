@@ -49,7 +49,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// DB shape from Supabase
+// Database shape from Supabase
 interface DbInitiative {
   id: string;
   applicant_name: string;
