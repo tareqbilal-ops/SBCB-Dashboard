@@ -47,7 +47,6 @@ import {
   Loader2,
   RefreshCw,
   AlertCircle,
-  Upload,
 } from "lucide-react";
 
 // DB shape from Supabase
