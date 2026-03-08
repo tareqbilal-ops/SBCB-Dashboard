@@ -18,7 +18,9 @@ import {
   Globe,
   FileText,
   Lightbulb,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
 const MEMBERSHIP_INFO = [
   {
@@ -171,6 +173,19 @@ export function LoginPortal() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Link to initiatives portal */}
+            <div className="border-t border-border pt-4">
+              <p className="text-center text-xs text-muted-foreground">
+                هل تريد تقديم مبادرة لتأسيس مجلس أعمال؟
+              </p>
+              <Link href="/initiatives" className="mt-2 block">
+                <Button variant="outline" className="w-full" size="sm">
+                  <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                  بوابة المبادرات (بدون مفتاح)
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
