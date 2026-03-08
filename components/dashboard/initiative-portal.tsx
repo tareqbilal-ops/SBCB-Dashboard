@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useCallback } from "react";
 import useSWR from "swr";
-import type { InitiativeStatus, Phase2Track } from "@/lib/types";
-import { PHASE2_TRACKS } from "@/lib/types";
-import { seedCountries } from "@/lib/seed-data";
+import type { InitiativeStatus } from "@/lib/types";
+import { UN_COUNTRIES, APPROVED_COUNCIL_COUNTRIES, getAvailableCountries } from "@/lib/un-countries";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,7 +91,25 @@ const ESTABLISHMENT_CONDITIONS = [
   "ألا يكون هناك مجلس أعمال قائم مع نفس الدولة",
   "تقديم سير ذاتية للأعضاء المؤسسين",
   "موافقة خطية من جميع الأعضاء المؤسسين",
+  "وجود نشاط تجاري معتبر في الدولة المقابلة",
 ];
+
+// Planned initiatives options (multi-select)
+const PLANNED_INITIATIVES = [
+  "بعثة تجارية",
+  "مؤتمر اقتصادي",
+  "منصة تصدير",
+  "لقاء B2B",
+  "دراسة سوق",
+  "غير ذلك",
+] as const;
+
+// Expected results options (multi-select)
+const EXPECTED_RESULTS = [
+  "عدد الشركات المشاركة",
+  "قيمة الاستثمارات المحتملة",
+  "حجم الصادرات المتوقع",
+] as const;
 
 const EVALUATION_STEPS = [
   { title: "تقديم الطلب", desc: "رفع جميع المستندات المطلوبة عبر البوابة" },
@@ -123,23 +141,26 @@ export function InitiativePortal({
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   // Get available countries (exclude those with Approved councils)
-  const availableCountries = useMemo(
-    () => seedCountries.filter((c) => c.stage !== "Approved"),
-    []
-  );
+  const availableCountries = useMemo(() => getAvailableCountries(), []);
 
   const [form, setForm] = useState({
     applicant_name: "",
     applicant_email: "",
     applicant_phone: "",
     target_country: "",
-    interest_area: "" as Phase2Track | "",
+    planned_initiatives: [] as string[],
+    expected_results: [] as string[],
     proposed_sectors: "" as string,
     founding_members: "",
+    founding_members_file: "" as string,
     business_plan_summary: "",
+    business_plan_file: "" as string,
     company_profile: "" as string,
     attachments: [] as string[],
+    acknowledgment: false,
   });
+  const [uploadingFounders, setUploadingFounders] = useState(false);
+  const [uploadingPlan, setUploadingPlan] = useState(false);
 
   // File upload helper
   const handleFileUpload = useCallback(async (
@@ -181,10 +202,13 @@ export function InitiativePortal({
           applicant_email: form.applicant_email,
           applicant_phone: form.applicant_phone,
           target_country: form.target_country,
-          interest_area: form.interest_area,
+          planned_initiatives: form.planned_initiatives,
+          expected_results: form.expected_results,
           proposed_sectors: form.proposed_sectors.split("،").map((s) => s.trim()).filter(Boolean),
           founding_members: form.founding_members,
+          founding_members_file: form.founding_members_file,
           business_plan_summary: form.business_plan_summary,
+          business_plan_file: form.business_plan_file,
           company_profile: form.company_profile,
           attachments: form.attachments,
           submitted_by: userId,
@@ -197,12 +221,16 @@ export function InitiativePortal({
         applicant_email: "",
         applicant_phone: "",
         target_country: "",
-        interest_area: "",
+        planned_initiatives: [],
+        expected_results: [],
         proposed_sectors: "",
         founding_members: "",
+        founding_members_file: "",
         business_plan_summary: "",
+        business_plan_file: "",
         company_profile: "",
         attachments: [],
+        acknowledgment: false,
       });
       setStep(0);
       setActiveTab("list");
@@ -442,7 +470,7 @@ export function InitiativePortal({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm">رقم الهاتف</Label>
+                    <Label className="text-sm">رقم الهاتف *</Label>
                     <Input
                       type="tel"
                       value={form.applicant_phone}
@@ -450,6 +478,7 @@ export function InitiativePortal({
                       placeholder="+90 555 123 4567"
                       className="text-sm"
                       dir="ltr"
+                      required
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -504,54 +533,103 @@ export function InitiativePortal({
             {/* Step 1: Target & Sectors */}
             {step === 1 && (
               <div className="flex flex-col gap-4">
-                <h3 className="text-sm font-medium text-foreground">الدولة المستهدفة والمجال</h3>
-                <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-medium text-foreground">الدولة المستهدفة والمبادرات المخططة</h3>
+                <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm">الدولة المستهدفة للمجلس</Label>
+                    <Label className="text-sm">الدولة المستهدفة للمجلس *</Label>
                     <Select
                       value={form.target_country}
                       onValueChange={(value) => setForm((f) => ({ ...f, target_country: value }))}
                     >
                       <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="اختر دولة..." />
+                        <SelectValue placeholder="اختر دولة من قائمة الدول الأعضاء في الأمم المتحدة..." />
                       </SelectTrigger>
-                      <SelectContent>
-                        {availableCountries.map((country) => (
-                          <SelectItem key={country.id} value={country.country_name_ar}>
-                            <div className="flex items-center gap-2">
-                              <span>{country.country_name_ar}</span>
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">
-                                {country.stage === "Under Assessment" ? "قيد الدراسة" :
-                                 country.stage === "Provisional" ? "مؤقت" :
-                                 country.stage === "Candidate" ? "مرشح" : country.stage}
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="max-h-[300px]">
+                        {UN_COUNTRIES.map((country) => {
+                          const isApproved = APPROVED_COUNCIL_COUNTRIES.includes(country as any);
+                          return (
+                            <SelectItem
+                              key={country}
+                              value={country}
+                              disabled={isApproved}
+                              className={isApproved ? "opacity-50" : ""}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span>{country}</span>
+                                {isApproved && (
+                                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                                    مجلس معتمد
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <p className="text-[10px] text-muted-foreground">
-                      الدول ذات المجالس المعتمدة غير متاحة للاختيار
+                      الدول ذات المجالس المعتمدة غير متاحة للاختيار (معطلة في القائمة)
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm">المجال الذي يهتم به صاحب المبادرة</Label>
-                    <Select
-                      value={form.interest_area}
-                      onValueChange={(value) => setForm((f) => ({ ...f, interest_area: value as Phase2Track }))}
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="اختر المجال..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PHASE2_TRACKS.map((track) => (
-                          <SelectItem key={track} value={track}>
-                            {track}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+
+                  <Separator />
+
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-sm">المبادرات المخطط لها (اختر ما ينطبق)</Label>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {PLANNED_INITIATIVES.map((initiative) => (
+                        <div key={initiative} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`initiative-${initiative}`}
+                            checked={form.planned_initiatives.includes(initiative)}
+                            onCheckedChange={(checked) => {
+                              setForm((f) => ({
+                                ...f,
+                                planned_initiatives: checked
+                                  ? [...f.planned_initiatives, initiative]
+                                  : f.planned_initiatives.filter((i) => i !== initiative),
+                              }));
+                            }}
+                          />
+                          <label
+                            htmlFor={`initiative-${initiative}`}
+                            className="text-xs text-foreground cursor-pointer"
+                          >
+                            {initiative}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-sm">النتائج المتوقعة (اختر ما ينطبق)</Label>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                      {EXPECTED_RESULTS.map((result) => (
+                        <div key={result} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`result-${result}`}
+                            checked={form.expected_results.includes(result)}
+                            onCheckedChange={(checked) => {
+                              setForm((f) => ({
+                                ...f,
+                                expected_results: checked
+                                  ? [...f.expected_results, result]
+                                  : f.expected_results.filter((r) => r !== result),
+                              }));
+                            }}
+                          />
+                          <label
+                            htmlFor={`result-${result}`}
+                            className="text-xs text-foreground cursor-pointer"
+                          >
+                            {result}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">القطاعات المقترحة (مفصولة بفاصلة عربية)</Label>
                     <Input
@@ -569,7 +647,8 @@ export function InitiativePortal({
             {step === 2 && (
               <div className="flex flex-col gap-4">
                 <h3 className="text-sm font-medium text-foreground">الأعضاء المؤسسون وخطة العمل</h3>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
+                  {/* Founding Members */}
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">وصف الأعضاء المؤسسين</Label>
                     <Textarea
@@ -581,6 +660,55 @@ export function InitiativePortal({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
+                    <Label className="text-sm">ملف الأعضاء المؤسسين (اختياري)</Label>
+                    <div className="flex gap-2 items-center">
+                      {form.founding_members_file ? (
+                        <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm truncate flex-1" dir="ltr">
+                            {form.founding_members_file.split("/").pop()?.split("-").slice(1).join("-") || form.founding_members_file}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setForm((f) => ({ ...f, founding_members_file: "" }))}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            className="text-sm"
+                            disabled={uploadingFounders}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(
+                                  file,
+                                  (pathname) => setForm((f) => ({ ...f, founding_members_file: pathname })),
+                                  setUploadingFounders
+                                );
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          {uploadingFounders && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
+                        </>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      يمكنك رفع ملف يحتوي على معلومات الأعضاء المؤسسين والسير الذاتية
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  {/* Business Plan */}
+                  <div className="flex flex-col gap-1.5">
                     <Label className="text-sm">ملخص خطة العمل</Label>
                     <Textarea
                       value={form.business_plan_summary}
@@ -589,6 +717,51 @@ export function InitiativePortal({
                       className="text-sm"
                       rows={4}
                     />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-sm">ملف خطة العمل (اختياري)</Label>
+                    <div className="flex gap-2 items-center">
+                      {form.business_plan_file ? (
+                        <div className="flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm truncate flex-1" dir="ltr">
+                            {form.business_plan_file.split("/").pop()?.split("-").slice(1).join("-") || form.business_plan_file}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setForm((f) => ({ ...f, business_plan_file: "" }))}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            className="text-sm"
+                            disabled={uploadingPlan}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(
+                                  file,
+                                  (pathname) => setForm((f) => ({ ...f, business_plan_file: pathname })),
+                                  setUploadingPlan
+                                );
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          {uploadingPlan && <Loader2 className="h-4 w-4 animate-spin shrink-0" />}
+                        </>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      يمكنك رفع ملف خطة العمل المفصلة
+                    </p>
                   </div>
                 </div>
               </div>
@@ -686,6 +859,25 @@ export function InitiativePortal({
                   </div>
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Acknowledgment Checkbox */}
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="acknowledgment"
+                      checked={form.acknowledgment}
+                      onCheckedChange={(checked) => setForm((f) => ({ ...f, acknowledgment: !!checked }))}
+                      className="mt-0.5"
+                    />
+                    <label htmlFor="acknowledgment" className="text-xs leading-relaxed text-foreground cursor-pointer">
+                      <span className="font-semibold">أقر بأن المعلومات المقدمة صحيحة،</span>
+                      <br />
+                      وأن المجلس المقترح في حال تأسيسه يلتزم بميثاق العمل تحت إدارة المجلس الأعلى لتنسيق مجالس الأعمال السورية المشتركة.
+                    </label>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -710,7 +902,13 @@ export function InitiativePortal({
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={!form.applicant_name.trim() || !form.target_country.trim() || submitting}
+                  disabled={
+                    !form.applicant_name.trim() ||
+                    !form.applicant_phone.trim() ||
+                    !form.target_country.trim() ||
+                    !form.acknowledgment ||
+                    submitting
+                  }
                   className="bg-primary text-primary-foreground"
                 >
                   {submitting ? (

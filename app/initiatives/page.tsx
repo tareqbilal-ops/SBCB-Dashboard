@@ -45,8 +45,8 @@ export default function InitiativesPage() {
   const [showForm, setShowForm] = useState(false);
 
   const handleGuestRegister = useCallback(() => {
-    if (!regForm.name.trim() || !regForm.email.trim()) {
-      alert("يرجى إدخال الاسم والبريد الإلكتروني");
+    if (!regForm.name.trim() || !regForm.email.trim() || !regForm.phone.trim()) {
+      alert("يرجى إدخال الاسم والبريد الإلكتروني ورقم الهاتف");
       return;
     }
     // Create a guest session
@@ -87,13 +87,20 @@ export default function InitiativesPage() {
       <div className="min-h-screen bg-background">
         {/* Simple header */}
         <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-          <div className="container mx-auto flex h-14 items-center justify-between px-4">
-            <div className="flex items-center gap-3">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="flex items-center gap-4">
+              <Image
+                src="/images/syrian-gov-logo.jpg"
+                alt="الجمهورية العربية السورية"
+                width={44}
+                height={44}
+                className="rounded-md"
+              />
               <Image
                 src="/images/sbcb-logo.png"
                 alt="SBCB Logo"
-                width={36}
-                height={36}
+                width={40}
+                height={40}
                 className="rounded-full"
               />
               <div>
@@ -132,7 +139,14 @@ export default function InitiativesPage() {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/images/syrian-gov-logo.jpg"
+              alt="الجمهورية العربية السورية"
+              width={48}
+              height={48}
+              className="rounded-md"
+            />
             <Image
               src="/images/sbcb-logo.png"
               alt="SBCB Logo"
@@ -263,13 +277,14 @@ export default function InitiativesPage() {
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm">رقم الهاتف (اختياري)</Label>
+                    <Label className="text-sm">رقم الهاتف *</Label>
                     <Input
                       type="tel"
                       value={regForm.phone}
                       onChange={(e) => setRegForm((f) => ({ ...f, phone: e.target.value }))}
                       placeholder="+90 555 123 4567"
                       dir="ltr"
+                      required
                     />
                   </div>
                   <Button onClick={handleGuestRegister} className="mt-2 w-full">
