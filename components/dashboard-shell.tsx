@@ -18,10 +18,14 @@ import {
   Lightbulb,
   LogOut,
   User,
+  Shield,
+  Building2,
+  BarChart3,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type View = "dashboard" | "countries" | "map" | "risks" | "projects" | "participants" | "initiatives";
+type View = "dashboard" | "countries" | "map" | "risks" | "projects" | "participants" | "initiatives" | "admin-users" | "admin-councils" | "admin-governance" | "admin-scores";
 
 interface DashboardShellProps {
   currentView: View;
@@ -29,7 +33,7 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-const navItems: { id: View; label: string; icon: React.ElementType; section?: string }[] = [
+const navItems: { id: View; label: string; icon: React.ElementType; section?: string; adminOnly?: boolean }[] = [
   { id: "dashboard", label: "اللوحة الرئيسية", icon: LayoutDashboard, section: "الرئيسية" },
   { id: "countries", label: "جدول الدول", icon: Globe },
   { id: "map", label: "خارطة الدول", icon: Map },
@@ -37,12 +41,20 @@ const navItems: { id: View; label: string; icon: React.ElementType; section?: st
   { id: "projects", label: "محفظة المشاريع", icon: Briefcase, section: "الإدارة" },
   { id: "participants", label: "قاعدة البيانات", icon: Users },
   { id: "initiatives", label: "بوابة المبادرات", icon: Lightbulb },
+  { id: "admin-users", label: "المستخدمون", icon: Shield, section: "الإدارة المركزية", adminOnly: true },
+  { id: "admin-councils", label: "المجالس", icon: Building2, adminOnly: true },
+  { id: "admin-governance", label: "الحوكمة والامتثال", icon: BarChart3, adminOnly: true },
+  { id: "admin-scores", label: "التقييم والتنبيهات", icon: Bell, adminOnly: true },
 ];
 
 export function DashboardShell({ currentView, onViewChange, children }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
+
+  // Filter nav items based on user permissions (admin sections only for مشرف عام)
+  const isAdmin = user?.membership_level === "مشرف عام";
+  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -86,7 +98,7 @@ export function DashboardShell({ currentView, onViewChange, children }: Dashboar
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="flex flex-col gap-1">
-            {navItems.map((item, idx) => {
+            {visibleNavItems.map((item, idx) => {
               const Icon = item.icon;
               const isActive = currentView === item.id;
               const showSection = item.section && sidebarOpen;
@@ -183,7 +195,7 @@ export function DashboardShell({ currentView, onViewChange, children }: Dashboar
             <span className="sr-only">القائمة</span>
           </Button>
           <h1 className="text-base font-semibold text-foreground">
-            {navItems.find((n) => n.id === currentView)?.label}
+            {visibleNavItems.find((n) => n.id === currentView)?.label || navItems.find((n) => n.id === currentView)?.label}
           </h1>
         </header>
 

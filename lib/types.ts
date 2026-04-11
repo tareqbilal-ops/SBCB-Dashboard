@@ -161,6 +161,304 @@ export interface Initiative {
   reviewer_notes: string | null;
 }
 
+// ========== ROLE TYPES (Based on ref_roles) ==========
+
+export const ROLE_CODES = [
+  "super_admin",
+  "coordination_admin",
+  "council_chairman",
+  "executive_member",
+  "appointments_manager",
+  "initiatives_manager",
+  "media_editor",
+  "viewer",
+] as const;
+export type RoleCode = (typeof ROLE_CODES)[number];
+
+export const ROLE_LABELS: Record<RoleCode, string> = {
+  super_admin: "مدير عام",
+  coordination_admin: "إدارة المجلس التنسيقي",
+  council_chairman: "رئيس مجلس",
+  executive_member: "عضو تنفيذي",
+  appointments_manager: "مدير المواعيد",
+  initiatives_manager: "مدير المبادرات",
+  media_editor: "محرر إعلامي",
+  viewer: "مستخدم للقراءة فقط",
+};
+
+// ========== SECTOR TYPES ==========
+
+export const SECTOR_CODES = [
+  "industry",
+  "trade",
+  "investment",
+  "energy",
+  "construction",
+  "agriculture",
+  "tourism",
+  "services",
+  "transport",
+  "technology",
+  "textile",
+  "food",
+  "other",
+] as const;
+export type SectorCode = (typeof SECTOR_CODES)[number];
+
+export const SECTOR_LABELS: Record<SectorCode, string> = {
+  industry: "الصناعة",
+  trade: "التجارة",
+  investment: "الاستثمار",
+  energy: "الطاقة",
+  construction: "الإنشاءات",
+  agriculture: "الزراعة",
+  tourism: "السياحة",
+  services: "الخدمات",
+  transport: "النقل",
+  technology: "التكنولوجيا",
+  textile: "النسيج",
+  food: "الغذائيات",
+  other: "أخرى",
+};
+
+// ========== COUNCIL TYPES ==========
+
+export const COUNCIL_STATUSES = ["draft", "active", "frozen", "closed"] as const;
+export type CouncilStatus = (typeof COUNCIL_STATUSES)[number];
+
+export const COUNCIL_STATUS_LABELS: Record<CouncilStatus, string> = {
+  draft: "مسودة",
+  active: "نشط",
+  frozen: "مجمد",
+  closed: "مغلق",
+};
+
+export const ESTABLISHMENT_STAGES = [
+  "under_establishment",
+  "approved",
+  "active",
+  "reorganized",
+] as const;
+export type EstablishmentStage = (typeof ESTABLISHMENT_STAGES)[number];
+
+export const ESTABLISHMENT_STAGE_LABELS: Record<EstablishmentStage, string> = {
+  under_establishment: "قيد التأسيس",
+  approved: "معتمد",
+  active: "نشط",
+  reorganized: "معاد هيكلته",
+};
+
+export interface Council {
+  id: string;
+  uuid: string;
+  name_ar: string;
+  name_en: string | null;
+  partner_country_code: string;
+  partner_country_name: string;
+  status: CouncilStatus;
+  establishment_stage: EstablishmentStage;
+  chairman_user_id: string | null;
+  summary: string | null;
+  sectors: SectorCode[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== SYSTEM USER TYPES ==========
+
+export interface SystemUser {
+  id: string;
+  uuid: string;
+  council_id: string | null;
+  name: string;
+  email: string;
+  role_code: RoleCode;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== MEMBERSHIP TYPES ==========
+
+export const MEMBER_TYPES = ["individual", "company", "institution"] as const;
+export type MemberType = (typeof MEMBER_TYPES)[number];
+
+export const MEMBER_TYPE_LABELS: Record<MemberType, string> = {
+  individual: "فرد",
+  company: "شركة",
+  institution: "مؤسسة",
+};
+
+export const MEMBERSHIP_STATUSES = ["active", "inactive"] as const;
+export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
+
+export interface Membership {
+  id: string;
+  uuid: string;
+  council_id: string;
+  member_type: MemberType;
+  name: string;
+  representative_name: string | null;
+  sector_code: SectorCode | null;
+  status: MembershipStatus;
+  email: string | null;
+  phone: string | null;
+  country_relation: string | null;
+  joined_at: string | null;
+  deactivation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== GOVERNANCE & COMPLIANCE TYPES ==========
+
+export interface GovernanceAssessment {
+  id: string;
+  council_id: string;
+  assessment_period: string;
+  national_interest_score: number;
+  professionalism_score: number;
+  institutional_discipline_score: number;
+  transparency_score: number;
+  clarity_of_responsibility_score: number;
+  evaluability_score: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const COMPLIANCE_STATUSES = ["compliant", "partially_compliant", "non_compliant"] as const;
+export type ComplianceStatus = (typeof COMPLIANCE_STATUSES)[number];
+
+export const COMPLIANCE_STATUS_LABELS: Record<ComplianceStatus, string> = {
+  compliant: "ملتزم",
+  partially_compliant: "ملتزم جزئياً",
+  non_compliant: "غير ملتزم",
+};
+
+export interface ComplianceCheck {
+  id: string;
+  council_id: string;
+  check_period: string;
+  has_annual_plan: boolean;
+  has_measurable_goals: boolean;
+  has_periodic_reports: boolean;
+  uses_national_platform: boolean;
+  uses_membership_portal: boolean;
+  uses_appointments_portal: boolean;
+  uses_initiatives_portal: boolean;
+  uses_media_window: boolean;
+  cooperates_with_coordination_board: boolean;
+  respects_media_guidelines: boolean;
+  official_correspondence_compliant: boolean;
+  overall_compliance_status: ComplianceStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== SCORES & CLASSIFICATION TYPES ==========
+
+export const CLASSIFICATION_TYPES = [
+  "leading",
+  "stable",
+  "needs_improvement",
+  "at_risk",
+] as const;
+export type ClassificationType = (typeof CLASSIFICATION_TYPES)[number];
+
+export const CLASSIFICATION_LABELS: Record<ClassificationType, string> = {
+  leading: "رائد",
+  stable: "مستقر",
+  needs_improvement: "يحتاج تحسين",
+  at_risk: "في خطر",
+};
+
+export interface CouncilScore {
+  id: string;
+  council_id: string;
+  period: string;
+  governance_score: number;
+  compliance_score: number;
+  execution_score: number;
+  impact_score: number;
+  integration_score: number;
+  platform_services_score: number;
+  overall_score: number;
+  classification: ClassificationType;
+  created_at: string;
+}
+
+// ========== ALERT TYPES ==========
+
+export const ALERT_TYPES = [
+  "missing_annual_plan",
+  "missing_reports",
+  "low_activity",
+  "low_impact",
+  "low_platform_usage",
+  "governance_risk",
+  "compliance_breach",
+  "integration_gap",
+  "low_appointments_usage",
+  "low_initiatives_usage",
+  "low_media_activity",
+  "outdated_opportunities",
+] as const;
+export type AlertType = (typeof ALERT_TYPES)[number];
+
+export const ALERT_TYPE_LABELS: Record<AlertType, string> = {
+  missing_annual_plan: "خطة سنوية مفقودة",
+  missing_reports: "تقارير مفقودة",
+  low_activity: "نشاط منخفض",
+  low_impact: "تأثير منخفض",
+  low_platform_usage: "استخدام منخفض للمنصة",
+  governance_risk: "خطر حوكمة",
+  compliance_breach: "خرق امتثال",
+  integration_gap: "فجوة تكامل",
+  low_appointments_usage: "استخدام منخفض للمواعيد",
+  low_initiatives_usage: "استخدام منخفض للمبادرات",
+  low_media_activity: "نشاط إعلامي منخفض",
+  outdated_opportunities: "فرص قديمة",
+};
+
+export const ALERT_SEVERITIES = ["low", "medium", "high"] as const;
+export type AlertSeverity = (typeof ALERT_SEVERITIES)[number];
+
+export const ALERT_SEVERITY_LABELS: Record<AlertSeverity, string> = {
+  low: "منخفض",
+  medium: "متوسط",
+  high: "مرتفع",
+};
+
+export const ALERT_STATUSES = ["open", "resolved", "dismissed"] as const;
+export type AlertStatus = (typeof ALERT_STATUSES)[number];
+
+export interface Alert {
+  id: string;
+  council_id: string;
+  alert_type: AlertType;
+  severity: AlertSeverity;
+  message: string;
+  status: AlertStatus;
+  resolution_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ========== AUDIT LOG TYPES ==========
+
+export interface AuditLog {
+  id: string;
+  user_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  changes_json: Record<string, unknown> | null;
+  created_at: string;
+}
+
 // ========== COMPUTED TYPES ==========
 
 export type ReadinessLabel =

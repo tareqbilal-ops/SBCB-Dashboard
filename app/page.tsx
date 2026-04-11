@@ -15,8 +15,12 @@ import { WorldMap } from "@/components/dashboard/world-map";
 import { ProjectsPortfolio } from "@/components/dashboard/projects-portfolio";
 import { ParticipantsDatabase } from "@/components/dashboard/participants-database";
 import { InitiativePortal } from "@/components/dashboard/initiative-portal";
+import { UsersManagement } from "@/components/dashboard/admin/users-management";
+import { CouncilsManagement } from "@/components/dashboard/admin/councils-management";
+import { GovernanceCompliance } from "@/components/dashboard/admin/governance-compliance";
+import { ScoresAlerts } from "@/components/dashboard/admin/scores-alerts";
 
-type View = "dashboard" | "countries" | "map" | "risks" | "projects" | "participants" | "initiatives";
+type View = "dashboard" | "countries" | "map" | "risks" | "projects" | "participants" | "initiatives" | "admin-users" | "admin-councils" | "admin-governance" | "admin-scores";
 
 function DashboardContent() {
   const { isAuthenticated, user, hasPermission } = useAuth();
@@ -138,6 +142,7 @@ function DashboardContent() {
   const canManageParticipants = hasPermission("مدير إقليمي");
   const canSubmitInitiatives = hasPermission("عضو");
   const canReviewInitiatives = hasPermission("مدير إقليمي");
+  const isAdmin = user?.membership_level === "مشرف عام";
 
   return (
     <DashboardShell currentView={currentView} onViewChange={setCurrentView}>
@@ -181,6 +186,10 @@ function DashboardContent() {
           userId={user?.id || ""}
         />
       )}
+      {currentView === "admin-users" && isAdmin && <UsersManagement />}
+      {currentView === "admin-councils" && isAdmin && <CouncilsManagement />}
+      {currentView === "admin-governance" && isAdmin && <GovernanceCompliance />}
+      {currentView === "admin-scores" && isAdmin && <ScoresAlerts />}
 
       <CountryDetail
         country={selectedCountry}
