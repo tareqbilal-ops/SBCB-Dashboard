@@ -62,8 +62,10 @@ import {
   Clock,
   Briefcase,
   FileText,
+  Settings,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CouncilEstablishmentWorkflow } from "./council-establishment-workflow";
 
 // Sample data
 const SAMPLE_COUNCILS: Council[] = [
@@ -201,6 +203,7 @@ export function CouncilsManagement({
   const [editingCouncil, setEditingCouncil] = useState<Council | null>(null);
   const [detailCouncil, setDetailCouncil] = useState<Council | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [establishmentCouncil, setEstablishmentCouncil] = useState<Council | null>(null);
 
   const [form, setForm] = useState({
     name_ar: "",
@@ -340,6 +343,16 @@ export function CouncilsManagement({
       day: "numeric",
     });
   };
+
+  // If viewing establishment workflow, show it
+  if (establishmentCouncil) {
+    return (
+      <CouncilEstablishmentWorkflow
+        council={establishmentCouncil as any}
+        onBack={() => setEstablishmentCouncil(null)}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -490,6 +503,22 @@ export function CouncilsManagement({
                       </div>
                       <span>{formatDate(council.created_at)}</span>
                     </div>
+
+                    {/* Quick action for under establishment councils */}
+                    {(council.status === "draft" || council.establishment_stage === "under_establishment") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEstablishmentCouncil(council);
+                        }}
+                      >
+                        <Settings className="ml-1 h-3 w-3" />
+                        إجراءات التأسيس
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -674,14 +703,30 @@ export function CouncilsManagement({
                     <Badge className={getStatusColor(detailCouncil.status)}>
                       {COUNCIL_STATUS_LABELS[detailCouncil.status]}
                     </Badge>
-                    <Button variant="outline" size="sm" onClick={() => {
-                      openEditDialog(detailCouncil);
-                      setDetailOpen(false);
-                    }}>
-                      <Edit className="ml-1.5 h-3.5 w-3.5" />
-                      تعديل
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        openEditDialog(detailCouncil);
+                        setDetailOpen(false);
+                      }}>
+                        <Edit className="ml-1.5 h-3.5 w-3.5" />
+                        تعديل
+                      </Button>
+                    </div>
                   </div>
+
+                  {/* Establishment Workflow Button */}
+                  {(detailCouncil.status === "draft" || detailCouncil.establishment_stage === "under_establishment") && (
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        setEstablishmentCouncil(detailCouncil);
+                        setDetailOpen(false);
+                      }}
+                    >
+                      <Settings className="ml-1.5 h-4 w-4" />
+                      إجراءات التأسيس
+                    </Button>
+                  )}
 
                   <div className="rounded-lg border border-border p-4 space-y-3">
                     <div className="flex items-center gap-3">
