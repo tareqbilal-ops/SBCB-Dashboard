@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback } from "react";
 import useSWR from "swr";
-import type { InitiativeStatus } from "@/lib/types";
+import type { InitiativeStatus, CandidateRole, EconomicSector, SyrianCity, ActivityType, BusinessSize } from "@/lib/types";
+import { CANDIDATE_ROLES, ECONOMIC_SECTORS, SYRIAN_CITIES, ACTIVITY_TYPES, BUSINESS_SIZES } from "@/lib/types";
 import { UN_COUNTRIES, APPROVED_COUNCIL_COUNTRIES, getAvailableCountries } from "@/lib/un-countries";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,10 +145,23 @@ export function InitiativePortal({
   const availableCountries = useMemo(() => getAvailableCountries(), []);
 
   const [form, setForm] = useState({
+    // Basic info
     applicant_name: "",
     applicant_email: "",
     applicant_phone: "",
     target_country: "",
+    // Extended candidate fields
+    current_residence_country: "",
+    origin_city: "" as SyrianCity | "",
+    economic_sector: "" as EconomicSector | "",
+    activity_type: "" as ActivityType | "",
+    business_size: "" as BusinessSize | "",
+    initiative_description: "",
+    partner_country_network: "",
+    professional_record: "",
+    desired_role: "غير محدد" as CandidateRole,
+    cv_file: "" as string,
+    // Existing fields
     planned_initiatives: [] as string[],
     expected_results: [] as string[],
     proposed_sectors: "" as string,
@@ -159,6 +173,7 @@ export function InitiativePortal({
     attachments: [] as string[],
     acknowledgment: false,
   });
+  const [uploadingCV, setUploadingCV] = useState(false);
   const [uploadingFounders, setUploadingFounders] = useState(false);
   const [uploadingPlan, setUploadingPlan] = useState(false);
 

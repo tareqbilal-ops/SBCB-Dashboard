@@ -141,8 +141,129 @@ export interface User {
 
 // ========== INITIATIVE TYPES ==========
 
-export const INITIATIVE_STATUSES = ["مقدّم", "قيد المراجعة", "مقبول", "مرفوض"] as const;
+export const INITIATIVE_STATUSES = [
+  "مقدّم",
+  "قيد الدراسة",
+  "مستوفية مبدئياً",
+  "قيد المراجعة",
+  "مقبول",
+  "مرفوض",
+  "احتياطية",
+  "معتمدة ضمن التشكيلة",
+] as const;
 export type InitiativeStatus = (typeof INITIATIVE_STATUSES)[number];
+
+// ========== CANDIDATE EVALUATION TYPES ==========
+
+export const CANDIDATE_ROLES = [
+  "رئيس المجلس",
+  "نائب رئيس المجلس",
+  "عضو مجلس إدارة",
+  "عضو احتياطي",
+  "غير محدد",
+] as const;
+export type CandidateRole = (typeof CANDIDATE_ROLES)[number];
+
+export const ACTIVITY_TYPES = [
+  "إنتاجي",
+  "تجاري",
+  "تصديري",
+  "استثماري",
+] as const;
+export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+
+export const BUSINESS_SIZES = [
+  "صغير (أقل من 10 موظفين)",
+  "متوسط (10-50 موظف)",
+  "كبير (51-200 موظف)",
+  "مؤسسة كبرى (أكثر من 200 موظف)",
+] as const;
+export type BusinessSize = (typeof BUSINESS_SIZES)[number];
+
+export const SYRIAN_CITIES = [
+  "دمشق",
+  "حلب",
+  "حمص",
+  "حماة",
+  "اللاذقية",
+  "طرطوس",
+  "دير الزور",
+  "الرقة",
+  "الحسكة",
+  "درعا",
+  "السويداء",
+  "القنيطرة",
+  "إدلب",
+  "ريف دمشق",
+] as const;
+export type SyrianCity = (typeof SYRIAN_CITIES)[number];
+
+export const ECONOMIC_SECTORS = [
+  "الصناعة",
+  "التجارة",
+  "الزراعة",
+  "السياحة",
+  "الخدمات المالية",
+  "التكنولوجيا",
+  "البناء والتشييد",
+  "النقل واللوجستيات",
+  "الطاقة",
+  "الصناعات الغذائية",
+  "الصناعات الكيميائية",
+  "النسيج والألبسة",
+  "الاستثمار العقاري",
+  "الخدمات الاستشارية",
+  "أخرى",
+] as const;
+export type EconomicSector = (typeof ECONOMIC_SECTORS)[number];
+
+// Candidate evaluation criteria (1-5 scale)
+export interface CandidateEvaluation {
+  quality_score: number; // جودة المبادرة
+  feasibility_score: number; // قابلية التنفيذ
+  financial_capacity_score: number; // الملاءة المالية
+  network_score: number; // شبكة العلاقات
+  reputation_score: number; // السمعة المهنية
+  sector_importance_score: number; // الأهمية القطاعية
+  geographic_representation_score: number; // التمثيل الجغرافي
+  total_score: number; // المجموع (محسوب)
+}
+
+// Extended initiative with candidate data
+export interface CandidateData {
+  // Basic info
+  full_name: string;
+  email: string;
+  phone: string;
+  
+  // Location
+  target_country: string; // الدولة الشريكة
+  current_residence_country: string; // بلد الإقامة الحالي
+  origin_city: SyrianCity; // المدينة الأصل في سوريا
+  
+  // Business info
+  economic_sector: EconomicSector; // القطاع الاقتصادي
+  activity_type: ActivityType; // نوع النشاط
+  business_size: BusinessSize; // حجم النشاط أو الشركة
+  initiative_description: string; // وصف المبادرة
+  
+  // Network & experience
+  partner_country_network: string; // شبكة العلاقات في الدولة الشريكة
+  professional_record: string; // السجل المهني المختصر
+  
+  // Role preference
+  desired_role: CandidateRole; // الرغبة بالدور
+  
+  // Files
+  company_profile_url: string | null;
+  cv_url: string | null;
+  
+  // Evaluation (filled by reviewer)
+  evaluation: CandidateEvaluation | null;
+  
+  // Final assignment
+  assigned_role: CandidateRole | null;
+}
 
 export interface Initiative {
   id: string;
