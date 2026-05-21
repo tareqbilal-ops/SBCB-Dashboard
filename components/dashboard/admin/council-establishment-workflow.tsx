@@ -113,8 +113,23 @@ const ESTABLISHMENT_PHASES = [
     steps: [
       { id: "chairman_appointed", label: "تعيين رئيس المجلس", required: true },
       { id: "board_formed", label: "تشكيل مجلس الإدارة", required: true },
+      { id: "executive_director", label: "تعيين مدير تنفيذي", required: true },
+      { id: "media_officer", label: "تعيين مسؤول إعلامي", required: true },
       { id: "committees_formed", label: "تشكيل اللجان", required: false },
       { id: "bylaws_approved", label: "اعتماد النظام الداخلي", required: true },
+    ],
+  },
+  {
+    id: "operational_setup",
+    title: "الإعداد التشغيلي",
+    description: "إعداد البنية التحتية التشغيلية والمالية",
+    steps: [
+      { id: "visual_identity", label: "تطوير هوية بصرية خاصة", required: true },
+      { id: "bank_account", label: "فتح حساب بنك سوري", required: true },
+      { id: "membership_system", label: "إقرار نظام عضوية", required: true },
+      { id: "subscription_fees", label: "إقرار رسوم اشتراك", required: true },
+      { id: "membership_form", label: "إطلاق استمارة انتساب", required: true },
+      { id: "annual_plan", label: "تطوير الخطة السنوية", required: true },
     ],
   },
   {
@@ -122,6 +137,7 @@ const ESTABLISHMENT_PHASES = [
     title: "مرحلة الإطلاق",
     description: "الإطلاق الرسمي وبدء العمل",
     steps: [
+      { id: "platform_activation", label: "تفعيل حساب المجلس على المنصة", required: true },
       { id: "official_announcement", label: "الإعلان الرسمي", required: true },
       { id: "platform_setup", label: "إعداد المنصات الرقمية", required: true },
       { id: "first_meeting", label: "الاجتماع التأسيسي", required: true },
@@ -129,6 +145,45 @@ const ESTABLISHMENT_PHASES = [
     ],
   },
 ];
+
+// Engagement checklist for approved councils
+export const ENGAGEMENT_CHECKLIST = [
+  {
+    id: "quarterly_report",
+    label: "رفع التقرير الربع سنوي",
+    description: "تقديم تقرير ربع سنوي عن أنشطة المجلس",
+    frequency: "ربع سنوي",
+    required: true,
+  },
+  {
+    id: "official_response",
+    label: "إجابة كتاب رسمي",
+    description: "الرد على المراسلات الرسمية من المجلس التنسيقي",
+    frequency: "حسب الطلب",
+    required: true,
+  },
+  {
+    id: "book_comm_window",
+    label: "حجز نافذة تواصل زمنية",
+    description: "حجز موعد للتواصل مع المجلس التنسيقي",
+    frequency: "شهري",
+    required: false,
+  },
+  {
+    id: "offer_comm_window",
+    label: "طرح نافذة تواصل زمنية",
+    description: "إتاحة نوافذ زمنية للتواصل مع الأعضاء والجهات المهتمة",
+    frequency: "شهري",
+    required: false,
+  },
+  {
+    id: "propose_event",
+    label: "اقتراح فعالية",
+    description: "اقتراح فعالية أو نشاط للتنفيذ",
+    frequency: "ربع سنوي",
+    required: false,
+  },
+] as const;
 
 // Founder member interface
 interface FounderMember {
@@ -821,7 +876,7 @@ export function CouncilEstablishmentWorkflow({
                   ) : (
                     <Save className="ml-1.5 h-4 w-4" />
                   )}
-                  حفظ البيانات
+                  حفظ البي��نات
                 </Button>
               </div>
             </CardContent>

@@ -63,9 +63,11 @@ import {
   Briefcase,
   FileText,
   Settings,
+  TrendingUp,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CouncilEstablishmentWorkflow } from "./council-establishment-workflow";
+import { CouncilEngagementTracker } from "./council-engagement-tracker";
 
 // Sample data
 const SAMPLE_COUNCILS: Council[] = [
@@ -204,6 +206,7 @@ export function CouncilsManagement({
   const [detailCouncil, setDetailCouncil] = useState<Council | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [establishmentCouncil, setEstablishmentCouncil] = useState<Council | null>(null);
+  const [showEngagementTracker, setShowEngagementTracker] = useState(false);
 
   const [form, setForm] = useState({
     name_ar: "",
@@ -354,6 +357,15 @@ export function CouncilsManagement({
     );
   }
 
+  // If viewing engagement tracker, show it
+  if (showEngagementTracker) {
+    return (
+      <CouncilEngagementTracker
+        onBack={() => setShowEngagementTracker(false)}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Stats Cards */}
@@ -414,15 +426,21 @@ export function CouncilsManagement({
 
       {/* Main Card */}
       <Card>
-        <CardHeader className="border-b border-border">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg">إدارة المجالس</CardTitle>
-            <Button onClick={openAddDialog} size="sm">
-              <Plus className="ml-1.5 h-4 w-4" />
-              إضافة مجلس
-            </Button>
-          </div>
-        </CardHeader>
+  <CardHeader className="border-b border-border">
+  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <CardTitle className="text-lg">إدارة المجالس</CardTitle>
+  <div className="flex items-center gap-2">
+  <Button variant="outline" onClick={() => setShowEngagementTracker(true)} size="sm">
+  <TrendingUp className="ml-1.5 h-4 w-4" />
+  متابعة التفاعل
+  </Button>
+  <Button onClick={openAddDialog} size="sm">
+  <Plus className="ml-1.5 h-4 w-4" />
+  إضافة مجلس
+  </Button>
+  </div>
+  </div>
+  </CardHeader>
         <CardContent className="p-4">
           {/* Filters */}
           <div className="mb-4 flex flex-col gap-3 sm:flex-row">
