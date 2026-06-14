@@ -6,6 +6,7 @@ import type { InitiativeStatus, CandidateRole, EconomicSector, SyrianCity, Activ
 import { CANDIDATE_ROLES, ECONOMIC_SECTORS, SYRIAN_CITIES, ACTIVITY_TYPES, BUSINESS_SIZES } from "@/lib/types";
 import { UN_COUNTRIES, APPROVED_COUNCIL_COUNTRIES, getAvailableCountries } from "@/lib/un-countries";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EstablishmentTracksMatrix } from "@/components/dashboard/establishment-tracks-matrix";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ import {
   Loader2,
   RefreshCw,
   AlertCircle,
+  GitBranch,
 } from "lucide-react";
 
 // Database shape from Supabase
@@ -130,7 +132,7 @@ export function InitiativePortal({
     { refreshInterval: 10000, revalidateOnFocus: true }
   );
 
-  const [activeTab, setActiveTab] = useState<"info" | "submit" | "list">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "submit" | "list" | "tracks">("info");
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
@@ -341,6 +343,7 @@ export function InitiativePortal({
           { id: "info" as const, label: "الشروط والآلية", icon: Info },
           ...(canSubmit ? [{ id: "submit" as const, label: "تقديم مبادرة", icon: Send }] : []),
           { id: "list" as const, label: canReview ? "جميع المبادرات" : "مبادراتي", icon: ClipboardList },
+          ...(canReview ? [{ id: "tracks" as const, label: "مسارات التأسيس", icon: GitBranch }] : []),
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -1037,6 +1040,23 @@ export function InitiativePortal({
               );
             })
           )}
+        </div>
+      )}
+
+      {/* Establishment Tracks Matrix */}
+      {activeTab === "tracks" && canReview && (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <div className="flex items-start gap-2">
+              <GitBranch className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                عرض المسارات المتوازية لتقدم تأسيس المجالس الجديدة. تقابل الصفوف المجالس قيد التأسيس،
+                وتقابل الأعمدة المراحل الـ 11 المعتمدة. اضغط على أي مرحلة لعرض تفاصيلها والمسؤول عنها،
+                أو على أي مجلس لعرض الخط الزمني الكامل.
+              </p>
+            </div>
+          </div>
+          <EstablishmentTracksMatrix />
         </div>
       )}
 
