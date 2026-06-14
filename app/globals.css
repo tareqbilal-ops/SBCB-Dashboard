@@ -124,3 +124,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix: Leaflet map creates stacking context that hides Sheet/Dialog overlays */
+.leaflet-container {
+  z-index: 0 !important;
+}
+.leaflet-pane {
+  z-index: auto !important;
+}
+.leaflet-tile-pane {
+  z-index: 1 !important;
+}
+.leaflet-overlay-pane {
+  z-index: 2 !important;
+}
+.leaflet-marker-pane {
+  z-index: 3 !important;
+}
+.leaflet-tooltip-pane {
+  z-index: 4 !important;
+}
+.leaflet-popup-pane {
+  z-index: 5 !important;
+}
+/* Ensure Radix portals (Sheet, Dialog) render above everything */
+[data-radix-portal] {
+  z-index: 9999 !important;
+}
